@@ -64,7 +64,7 @@ app.post('/register-and-broadcast-node', (req, res) => {
   Promise.all(regNodesPromises)
     .then(data => {
       const requestOptions = {
-        uri: newNodeUrl + '/register-node-bulk',
+        uri: newNodeUrl + '/register-nodes-bulk',
         method: 'POST',
         body: {
           allNetworkNotes: [...bitcoin.networkNodes, bitcoin.currentNodeUrl]
@@ -91,10 +91,10 @@ app.post('/register-node', (req, res) => {
 app.post('/register-nodes-bulk', (req, res) => {
   const allNetworkNotes = req.body.allNetworkNotes
   allNetworkNotes.forEach(networkNode => {
-    const nodeNotAlreadyPresent = bitcoin.networkNodes.indexOf(newNodeUrl) == -1
-    const notCurrentNode = bitcoin.currentNodeUrl !== newNodeUrl
+    const nodeNotAlreadyPresent = bitcoin.networkNodes.indexOf(networkNode) == -1
+    const notCurrentNode = bitcoin.currentNodeUrl !== networkNode
     if (nodeNotAlreadyPresent && notCurrentNode) {
-      bitcoin.networkNodes.push(networkNodeUrl)
+      bitcoin.networkNodes.push(networkNode)
     }
   })
   res.json({note:'Bulk registrtation successful.'})
