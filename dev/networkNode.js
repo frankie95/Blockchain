@@ -25,6 +25,29 @@ app.post('/transaction', (req, res) => {
   )
   res.json({ note: `Transaction will be added in block ${blockIndex}.` })
 })
+
+app.post('/transaction/broadcast', (req, res) => {
+  const newTransaction = bitcoin.createNewTransaction(
+    req.body.amount,
+    req.body.sender,
+    req.body.recipient
+  )
+  bitcoin.addTransactionToPendingTransaction(newTransaction)
+  const requestPromises = []
+  bitcoin.networkNodes.forEach(networkNodeUrl => {
+    const requestOptions = {
+      uri: networkNodeUrl + '/transaction',
+      method: 'POST',
+      body: newTransaction,
+      json: true
+    }
+    requestPromises.push(rp(requestOptions))
+  })
+  Promise.all(requestPromises).then(data=>{
+    res.json({note: 'Transaction created and broadcast successfully.'})
+  })
+})
+
 app.get('/mine', (req, res) => {
   const lastBlock = bitcoin.getLastBlock()
   const previousBlockHash = lastBlock['hash']
@@ -91,13 +114,14 @@ app.post('/register-node', (req, res) => {
 app.post('/register-nodes-bulk', (req, res) => {
   const allNetworkNotes = req.body.allNetworkNotes
   allNetworkNotes.forEach(networkNode => {
-    const nodeNotAlreadyPresent = bitcoin.networkNodes.indexOf(networkNode) == -1
+    const nodeNotAlreadyPresent =
+      bitcoin.networkNodes.indexOf(networkNode) == -1
     const notCurrentNode = bitcoin.currentNodeUrl !== networkNode
     if (nodeNotAlreadyPresent && notCurrentNode) {
       bitcoin.networkNodes.push(networkNode)
     }
   })
-  res.json({note:'Bulk registrtation successful.'})
+  res.json({ note: 'Bulk registrtation successful.' })
 })
 
 app.listen(port, () => {
